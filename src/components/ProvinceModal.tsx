@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -10,6 +11,7 @@ import {
 import { BlurView } from 'expo-blur';
 import { provincesById } from '../data/provinces';
 import { getPlantsForProvince } from '../data/plants';
+import { useProvinceEnvironment } from '../hooks/useProvinceEnvironment';
 import { colors, fonts } from '../theme/colors';
 import { PlantCard } from './PlantCard';
 
@@ -18,10 +20,17 @@ type Props = {
   onClose: () => void;
 };
 
+function fmt(value: number | null | undefined, unit = '', digits = 1): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  const n = Number.isInteger(value) ? String(value) : value.toFixed(digits);
+  return unit ? `${n} ${unit}` : n;
+}
+
 export function ProvinceModal({ provinceId, onClose }: Props) {
   const { height } = useWindowDimensions();
   const province = provinceId ? provincesById[provinceId] : null;
   const plants = provinceId ? getPlantsForProvince(provinceId) : [];
+  const { data: env, loading, error } = useProvinceEnvironment(provinceId);
 
   return (
     <Modal
@@ -56,18 +65,100 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
               contentContainerStyle={styles.content}
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.sectionTitle}>İklim</Text>
-              <View style={styles.grid}>
-                <Info label="Köppen" value={province?.climate.koppen ?? ''} />
-                <Info label="Yağış (mm)" value={province?.climate.rainfallMm ?? ''} />
-                <Info label="Ort. sıcaklık (°C)" value={province?.climate.tempC ?? ''} />
-                <Info label="Don riski" value={province?.climate.frostRisk ?? ''} />
-                <Info label="Yükselti (m)" value={province?.climate.elevationM ?? ''} />
-              </View>
+              <Text style={styles.sectionTitle}>Canlı çevre verisi</Text>
+              {loading ? (
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator color={colors.accent} />
+                  <Text style={styles.loadingText}>API’den alınıyor…</Text>
+                </View>
+              ) : null}
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-              <Text style={styles.sectionTitle}>Peyzaj</Text>
-              <Info label="Toprak / nem" value={province?.landscape.soilMoisture ?? ''} />
-              <Info label="Sulama" value={province?.landscape.irrigation ?? ''} />
+              {!loading && env ? (
+                <>
+                  <View style={styles.grid}>
+                    <Info
+                      label="Yükselti"
+                      value={fmt(env.elevationM, 'm', 0)}
+                    />
+                    <Info
+                      label="Anlık sıcaklık"
+                      value={fmt(env.climate.tempNowC, '°C')}
+                    />
+                    <Info
+                      label="Nem"
+                      value={fmt(env.climate.humidityPct, '%', 0)}
+                    />
+                    <Info
+                      label="7g ort. max / min"
+                      value={`${fmt(env.climate.tempMaxAvgC, '°C')} / ${fmt(env.climate.tempMinAvgC, '°C')}`}
+                    />
+                    <Info
+                      label="7g toplam yağış"
+                      value={fmt(env.climate.precipWeekMm, 'mm')}
+                    />
+                  </View>
+
+                  <Text style={styles.sectionTitle}>Güneş</Text>
+                  <View style={styles.grid}>
+                    <Info
+                      label="Anlık kısa dalga ışınım"
+                      value={fmt(env.sun.radiationNowWm2, 'W/m²', 0)}
+                    />
+                    <Info
+                      label="7g güneşlenme"
+                      value={fmt(env.sun.sunshineWeekHours, 'saat')}
+                    />
+                  </View>
+
+                  <Text style={styles.sectionTitle}>Rüzgar</Text>
+                  <View style={styles.grid}>
+                    <Info
+                      label="Anlık hız / yön"
+                      value={`${fmt(env.wind.speedNowKmh, 'km/h')} · ${env.wind.directionNowLabel ?? '—'} (${fmt(env.wind.directionNowDeg, '°', 0)})`}
+                    />
+                    <Info
+                      label="7g baskın yön"
+                      value={`${env.wind.dominantWeekLabel ?? '—'} (${fmt(env.wind.dominantWeekDeg, '°', 0)})`}
+                    />
+                    <Info
+                      label="7g max hız"
+                      value={fmt(env.wind.maxWeekKmh, 'km/h')}
+                    />
+                  </View>
+
+                  <Text style={styles.sectionTitle}>Toprak (0–5 cm)</Text>
+                  <View style={styles.grid}>
+                    <Info label="pH" value={fmt(env.soil.ph)} />
+                    <Info
+                      label="Organik karbon"
+                      value={fmt(env.soil.organicCarbonGkg, 'g/kg')}
+                    />
+                    <Info label="Kil" value={fmt(env.soil.clayPct, '%')} />
+                    <Info label="Kum" value={fmt(env.soil.sandPct, '%')} />
+                  </View>
+
+                  <Text style={styles.source}>
+                    Kaynak: {env.source.weather} · {env.source.soil}
+                    {'\n'}
+                    İl merkezi noktası · güncellendi{' '}
+                    {new Date(env.fetchedAt).toLocaleString('tr-TR')}
+                  </Text>
+                </>
+              ) : null}
+
+              <Text style={styles.sectionTitle}>Peyzaj özeti</Text>
+              <View style={styles.grid}>
+                <Info label="Köppen (referans)" value={province?.climate.koppen ?? ''} />
+                <Info
+                  label="Toprak / nem (referans)"
+                  value={province?.landscape.soilMoisture ?? ''}
+                />
+                <Info
+                  label="Sulama (referans)"
+                  value={province?.landscape.irrigation ?? ''}
+                />
+              </View>
               <Text style={styles.strategy}>{province?.landscape.strategy}</Text>
 
               <Text style={styles.sectionTitle}>
@@ -191,5 +282,29 @@ const styles = StyleSheet.create({
   empty: {
     fontFamily: fonts.body,
     color: colors.textMuted,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  loadingText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+  errorText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: '#8B3A3A',
+    marginBottom: 12,
+  },
+  source: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    lineHeight: 16,
+    color: colors.textMuted,
+    marginBottom: 16,
   },
 });

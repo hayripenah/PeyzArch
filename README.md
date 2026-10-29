@@ -32,3 +32,12 @@ Lokal geliştirme her zaman **8082** portunda çalışır (`http://localhost:808
 ## Veri
 
 Asıl arşiv dokümanı gelene kadar `src/data/plants.ts` test kayıtları içerir. Şema sabit kalır; içerik değiştirilir.
+
+### Dinamik çevre API’leri
+
+İl seçilince il merkezi koordinatından:
+
+- **Open-Meteo** — sıcaklık, nem, yağış, güneşlenme, rüzgar yönü/hız, yükselti
+- **ISRIC SoilGrids** — pH, organik karbon, kil/kum (0–5 cm)
+
+Kod: `src/api/`, hook: `src/hooks/useProvinceEnvironment.ts`. Sonuçlar 30 dk bellek önbelleğinde tutulur.
