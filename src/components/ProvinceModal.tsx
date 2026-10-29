@@ -17,6 +17,10 @@ import { provincesById } from '../data/provinces';
 import { useProvinceEnvironment } from '../hooks/useProvinceEnvironment';
 import { colors, fonts } from '../theme/colors';
 import { AccordionSection } from './AccordionSection';
+import { ClimateHeroCard } from './charts/ClimateHeroCard';
+import { SoilBars } from './charts/SoilBars';
+import { SunshineCard } from './charts/SunshineCard';
+import { WindRose } from './charts/WindRose';
 import { PlantCard } from './PlantCard';
 
 type Props = {
@@ -99,27 +103,7 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
                   </View>
                 ) : null}
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
-                {env ? (
-                  <View style={styles.grid}>
-                    <Info label="Yükselti" value={fmt(env.elevationM, 'm', 0)} />
-                    <Info
-                      label="Anlık sıcaklık"
-                      value={fmt(env.climate.tempNowC, '°C')}
-                    />
-                    <Info
-                      label="Nem"
-                      value={fmt(env.climate.humidityPct, '%', 0)}
-                    />
-                    <Info
-                      label="7g ort. max / min"
-                      value={`${fmt(env.climate.tempMaxAvgC, '°C')} / ${fmt(env.climate.tempMinAvgC, '°C')}`}
-                    />
-                    <Info
-                      label="7g toplam yağış"
-                      value={fmt(env.climate.precipWeekMm, 'mm')}
-                    />
-                  </View>
-                ) : null}
+                {env ? <ClimateHeroCard env={env} /> : null}
               </AccordionSection>
 
               <AccordionSection
@@ -131,16 +115,7 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
                 }
               >
                 {env ? (
-                  <View style={styles.grid}>
-                    <Info
-                      label="Anlık kısa dalga ışınım"
-                      value={fmt(env.sun.radiationNowWm2, 'W/m²', 0)}
-                    />
-                    <Info
-                      label="7g güneşlenme"
-                      value={fmt(env.sun.sunshineWeekHours, 'saat')}
-                    />
-                  </View>
+                  <SunshineCard env={env} />
                 ) : (
                   <Text style={styles.empty}>Veri bekleniyor…</Text>
                 )}
@@ -155,20 +130,7 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
                 }
               >
                 {env ? (
-                  <View style={styles.grid}>
-                    <Info
-                      label="Anlık hız / yön"
-                      value={`${fmt(env.wind.speedNowKmh, 'km/h')} · ${env.wind.directionNowLabel ?? '—'} (${fmt(env.wind.directionNowDeg, '°', 0)})`}
-                    />
-                    <Info
-                      label="7g baskın yön"
-                      value={`${env.wind.dominantWeekLabel ?? '—'} (${fmt(env.wind.dominantWeekDeg, '°', 0)})`}
-                    />
-                    <Info
-                      label="7g max hız"
-                      value={fmt(env.wind.maxWeekKmh, 'km/h')}
-                    />
-                  </View>
+                  <WindRose env={env} />
                 ) : (
                   <Text style={styles.empty}>Veri bekleniyor…</Text>
                 )}
@@ -179,18 +141,7 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
                 subtitle={env ? `pH ${fmt(env.soil.ph)}` : 'SoilGrids'}
               >
                 {env ? (
-                  <View style={styles.grid}>
-                    <Info label="pH" value={fmt(env.soil.ph)} />
-                    <Info
-                      label="Organik karbon"
-                      value={fmt(env.soil.organicCarbonGkg, 'g/kg')}
-                    />
-                    <Info label="Kil" value={fmt(env.soil.clayPct, '%')} />
-                    <Info label="Kum" value={fmt(env.soil.sandPct, '%')} />
-                    <Text style={styles.source}>
-                      {env.source.weather} · {env.source.soil}
-                    </Text>
-                  </View>
+                  <SoilBars env={env} />
                 ) : (
                   <Text style={styles.empty}>Veri bekleniyor…</Text>
                 )}

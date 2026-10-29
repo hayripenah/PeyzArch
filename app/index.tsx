@@ -1,10 +1,15 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Hero } from '../src/components/Hero';
 import { NavBar } from '../src/components/NavBar';
 import { ProvinceModal } from '../src/components/ProvinceModal';
+import { SurveyDock } from '../src/components/survey/SurveyDock';
 import { TurkeyMap } from '../src/components/TurkeyMap';
+import { provincesById } from '../src/data/provinces';
+import { provinceCoords } from '../src/data/provinceCoords';
+import { useDeviceHeading } from '../src/hooks/useDeviceHeading';
+import type { LonLat } from '../src/lib/geoProjection';
 import type { SearchResult } from '../src/lib/search';
 import { colors } from '../src/theme/colors';
 
@@ -17,6 +22,8 @@ export default function HomeScreen() {
   const [density, setDensity] = useState<Record<string, number> | null>(null);
   const [heatLegend, setHeatLegend] = useState<string | null>(null);
   const [activeQuery, setActiveQuery] = useState<string | null>(null);
+  const [pointerGeo, setPointerGeo] = useState<LonLat | null>(null);
+  const deviceHeading = useDeviceHeading();
 
   const scrollToMap = useCallback(() => {
     scrollRef.current?.scrollTo({ y: mapY, animated: true });
@@ -52,6 +59,18 @@ export default function HomeScreen() {
     setHeatLegend(null);
   };
 
+  const selected = selectedId ? provincesById[selectedId] : null;
+  const selectedCoord = selectedId ? provinceCoords[selectedId] : null;
+
+  const displayGeo = useMemo(() => {
+    if (pointerGeo) return pointerGeo;
+    if (selectedCoord) return { lon: selectedCoord.lon, lat: selectedCoord.lat };
+    return null;
+  }, [pointerGeo, selectedCoord]);
+
+  const headingDeg = deviceHeading ?? 0;
+  const compassSource = deviceHeading != null ? 'Cihaz pusulası' : 'Kuzey referansı';
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="dark" />
@@ -84,6 +103,18 @@ export default function HomeScreen() {
             onSelect={setSelectedId}
             densityByProvince={density}
             heatLegend={heatLegend}
+            onPointerGeo={setPointerGeo}
+          />
+          <SurveyDock
+            lon={displayGeo?.lon ?? null}
+            lat={displayGeo?.lat ?? null}
+            headingDeg={headingDeg}
+            compassSource={compassSource}
+            provinceLabel={
+              selected
+                ? `${selected.name} · ${selected.region} · Plaka ${selected.id}`
+                : null
+            }
           />
         </View>
       </ScrollView>

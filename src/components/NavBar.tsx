@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -23,6 +24,8 @@ const kindLabel: Record<SearchResult['kind'], string> = {
   plant: 'Bitki',
   plantType: 'Tür',
 };
+
+const PILL = 999;
 
 export function NavBar({
   onMapPress,
@@ -53,121 +56,150 @@ export function NavBar({
         paddingHorizontal: 12,
       }}
     >
-      <View
-        style={{
-          maxWidth: 860,
-          width: '100%',
-          borderRadius: focused || showDropdown ? 22 : 999,
-          overflow: 'visible',
-          borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.55)',
-          backgroundColor: 'rgba(247, 245, 241, 0.72)',
-          shadowColor: '#2A2A28',
-          shadowOpacity: 0.14,
-          shadowRadius: 24,
-          shadowOffset: { width: 0, height: 8 },
-          elevation: 8,
-        }}
-      >
-        <BlurView intensity={40} tint="light" style={{ borderRadius: 22, overflow: 'hidden' }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-              gap: 10,
-            }}
-          >
-            <Text
-              style={{
-                fontFamily: fonts.display,
-                fontSize: 18,
-                color: colors.text,
-                fontWeight: '600',
-              }}
-            >
-              PeyzArch
-            </Text>
-
+      <View style={{ maxWidth: 860, width: '100%', position: 'relative' }}>
+        {/* Ana kapsül — her zaman tam yuvarlak + beyaz border */}
+        <View
+          style={{
+            borderRadius: PILL,
+            overflow: 'hidden',
+            borderWidth: 1.5,
+            borderColor: '#FFFFFF',
+            backgroundColor: 'rgba(247, 245, 241, 0.78)',
+            shadowColor: '#2A2A28',
+            shadowOpacity: 0.14,
+            shadowRadius: 24,
+            shadowOffset: { width: 0, height: 8 },
+            elevation: 8,
+          }}
+        >
+          <BlurView intensity={40} tint="light">
             <View
               style={{
-                flex: 1,
                 flexDirection: 'row',
                 alignItems: 'center',
-                backgroundColor: colors.white,
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: colors.border,
-                paddingHorizontal: 12,
-                minHeight: 40,
+                paddingVertical: 6,
+                paddingHorizontal: 8,
+                gap: 8,
               }}
-            >
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                onFocus={() => setFocused(true)}
-                onBlur={() => {
-                  // küçük gecikme: sonuç tıklaması kaçmasın
-                  setTimeout(() => setFocused(false), 180);
-                }}
-                placeholder="Bölge, il veya bitki ara…"
-                placeholderTextColor={colors.textMuted}
-                style={{
-                  flex: 1,
-                  fontFamily: fonts.body,
-                  fontSize: 14,
-                  color: colors.text,
-                  paddingVertical: Platform.OS === 'web' ? 8 : 6,
-                  outlineStyle: 'none',
-                } as never}
-              />
-              {query.length > 0 ? (
-                <Pressable
-                  onPress={() => {
-                    setQuery('');
-                    onClearSearch?.();
-                  }}
-                  hitSlop={8}
-                >
-                  <Text style={{ color: colors.textMuted, fontSize: 13 }}>Temizle</Text>
-                </Pressable>
-              ) : null}
-            </View>
-
-            <Pressable
-              onPress={onMapPress}
-              accessibilityRole="button"
-              accessibilityLabel="Haritayı aç"
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? colors.accentHover : colors.accent,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-                borderRadius: 999,
-              })}
             >
               <Text
                 style={{
-                  fontFamily: fonts.bodySemi,
-                  fontSize: 13,
-                  color: colors.white,
+                  fontFamily: fonts.display,
+                  fontSize: 17,
+                  color: colors.text,
                   fontWeight: '600',
+                  paddingLeft: 10,
                 }}
               >
-                Harita
+                PeyzArch
               </Text>
-            </Pressable>
-          </View>
 
-          {showDropdown ? (
-            <View
-              style={{
-                borderTopWidth: 1,
-                borderTopColor: colors.border,
-                backgroundColor: colors.surface,
-                maxHeight: 320,
-              }}
-            >
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.white,
+                  borderRadius: PILL,
+                  borderWidth: 1.5,
+                  borderColor: '#FFFFFF',
+                  paddingHorizontal: 14,
+                  minHeight: 40,
+                  shadowColor: '#2A2A28',
+                  shadowOpacity: 0.06,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 2 },
+                }}
+              >
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => {
+                    setTimeout(() => setFocused(false), 180);
+                  }}
+                  placeholder="Bölge, il veya bitki ara…"
+                  placeholderTextColor={colors.textMuted}
+                  style={
+                    {
+                      flex: 1,
+                      fontFamily: fonts.body,
+                      fontSize: 14,
+                      color: colors.text,
+                      paddingVertical: Platform.OS === 'web' ? 8 : 6,
+                      outlineStyle: 'none',
+                    } as never
+                  }
+                />
+                {query.length > 0 ? (
+                  <Pressable
+                    onPress={() => {
+                      setQuery('');
+                      onClearSearch?.();
+                    }}
+                    hitSlop={8}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: fonts.body,
+                        color: colors.textMuted,
+                        fontSize: 13,
+                      }}
+                    >
+                      Temizle
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
+
+              <Pressable
+                onPress={onMapPress}
+                accessibilityRole="button"
+                accessibilityLabel="Haritayı aç"
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colors.accentHover : colors.accent,
+                  paddingHorizontal: 18,
+                  minHeight: 40,
+                  justifyContent: 'center',
+                  borderRadius: PILL,
+                  borderWidth: 1.5,
+                  borderColor: '#FFFFFF',
+                })}
+              >
+                <Text
+                  style={{
+                    fontFamily: fonts.bodySemi,
+                    fontSize: 13,
+                    color: colors.white,
+                    fontWeight: '600',
+                  }}
+                >
+                  Harita
+                </Text>
+              </Pressable>
+            </View>
+          </BlurView>
+        </View>
+
+        {/* Sonuçlar — ayrı soft pill panel, kapsülü bozmaz */}
+        {showDropdown ? (
+          <View
+            style={{
+              marginTop: 8,
+              borderRadius: 22,
+              overflow: 'hidden',
+              borderWidth: 1.5,
+              borderColor: '#FFFFFF',
+              backgroundColor: 'rgba(247, 245, 241, 0.95)',
+              maxHeight: 300,
+              shadowColor: '#2A2A28',
+              shadowOpacity: 0.12,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 6 },
+              elevation: 6,
+            }}
+          >
+            <ScrollView keyboardShouldPersistTaps="handled">
               {results.map((r) => (
                 <Pressable
                   key={r.id}
@@ -179,7 +211,7 @@ export function NavBar({
                   style={({ pressed }) => ({
                     paddingHorizontal: 16,
                     paddingVertical: 12,
-                    backgroundColor: pressed ? colors.accentSoft : colors.surface,
+                    backgroundColor: pressed ? colors.accentSoft : 'transparent',
                     borderBottomWidth: 1,
                     borderBottomColor: colors.border,
                   })}
@@ -200,7 +232,7 @@ export function NavBar({
                         overflow: 'hidden',
                         paddingHorizontal: 8,
                         paddingVertical: 3,
-                        borderRadius: 999,
+                        borderRadius: PILL,
                       }}
                     >
                       {kindLabel[r.kind]}
@@ -223,7 +255,6 @@ export function NavBar({
                       fontSize: 12,
                       color: colors.textMuted,
                       marginTop: 2,
-                      marginLeft: 2,
                     }}
                     numberOfLines={1}
                   >
@@ -231,9 +262,9 @@ export function NavBar({
                   </Text>
                 </Pressable>
               ))}
-            </View>
-          ) : null}
-        </BlurView>
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
     </View>
   );
