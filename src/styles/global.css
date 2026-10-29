@@ -1,4 +1,3 @@
-/* PeyzArch web fallback — RN StyleSheet yanında görünür tasarım garantisi */
 html,
 body,
 #root {
@@ -11,4 +10,9 @@ body,
 
 button {
   font-family: inherit;
+  cursor: pointer;
+}
+
+img {
+  max-width: none;
 }

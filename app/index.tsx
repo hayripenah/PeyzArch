@@ -14,23 +14,30 @@ export default function HomeScreen() {
   const [mapY, setMapY] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const scrollToMap = () => {
+    scrollRef.current?.scrollTo({ y: mapY, animated: true });
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="dark" />
-      <NavBar />
+      <NavBar onMapPress={scrollToMap} />
       <ScrollView
         ref={scrollRef as never}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 48 }}
         showsVerticalScrollIndicator={false}
       >
-        <Hero
-          onExplore={() =>
-            scrollRef.current?.scrollTo({ y: mapY, animated: true })
-          }
-        />
+        <Hero onExplore={scrollToMap} />
         <View
           onLayout={(e) => setMapY(e.nativeEvent.layout.y)}
           collapsable={false}
+          style={{
+            backgroundColor: colors.bg,
+            paddingTop: 28,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            marginTop: -20,
+          }}
         >
           <TurkeyMap selectedId={selectedId} onSelect={setSelectedId} />
         </View>

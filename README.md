@@ -7,10 +7,12 @@ Coğrafi giriş modeli [TÜBİVES](https://doi.org/10.1109/hibit.2011.6450823) y
 
 ```bash
 npm install
-npx expo start
+npm start
 ```
 
-- Web: `npx expo start --web`
+Lokal geliştirme her zaman **8082** portunda çalışır (`http://localhost:8082`).
+
+- Web: `npm run web`
 - iOS / Android: Expo Go veya EAS development build
 
 ## Stack
