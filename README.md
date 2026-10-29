@@ -31,7 +31,8 @@ Lokal geliştirme her zaman **8082** portunda çalışır (`http://localhost:808
 
 ## Veri
 
-Asıl arşiv dokümanı gelene kadar `src/data/plants.ts` test kayıtları içerir. Şema sabit kalır; içerik değiştirilir.
+Erzurum / Doğu Anadolu bitki arşivi: `src/data/archivePlants.ts` (62 tür, çoklu internet görselleri).  
+İçe aktarım: `node scripts/import-archive.mjs` (önce `scripts/_cleaned-archive.json`).
 
 ### Dinamik çevre API’leri
 

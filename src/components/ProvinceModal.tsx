@@ -9,10 +9,14 @@ import {
   View,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import {
+  getArchivePlantsForProvince,
+  getRegionArchiveForProvince,
+} from '../data/archivePlants';
 import { provincesById } from '../data/provinces';
-import { getPlantsForProvince } from '../data/plants';
 import { useProvinceEnvironment } from '../hooks/useProvinceEnvironment';
 import { colors, fonts } from '../theme/colors';
+import { AccordionSection } from './AccordionSection';
 import { PlantCard } from './PlantCard';
 
 type Props = {
@@ -26,10 +30,22 @@ function fmt(value: number | null | undefined, unit = '', digits = 1): string {
   return unit ? `${n} ${unit}` : n;
 }
 
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.info}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  );
+}
+
 export function ProvinceModal({ provinceId, onClose }: Props) {
   const { height } = useWindowDimensions();
   const province = provinceId ? provincesById[provinceId] : null;
-  const plants = provinceId ? getPlantsForProvince(provinceId) : [];
+  const plants = provinceId ? getArchivePlantsForProvince(provinceId) : [];
+  const regionArchive = provinceId
+    ? getRegionArchiveForProvince(provinceId)
+    : null;
   const { data: env, loading, error } = useProvinceEnvironment(provinceId);
 
   return (
@@ -41,11 +57,11 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
     >
       <View style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.sheet, { maxHeight: height * 0.88 }]}>
+        <View style={[styles.sheet, { maxHeight: height * 0.9 }]}>
           <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
           <View style={styles.sheetInner}>
             <View style={styles.header}>
-              <View>
+              <View style={{ flex: 1, paddingRight: 12 }}>
                 <Text style={styles.title}>{province?.name}</Text>
                 <Text style={styles.sub}>
                   {province?.region} · Plaka {province?.id}
@@ -65,22 +81,27 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
               contentContainerStyle={styles.content}
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.sectionTitle}>Canlı çevre verisi</Text>
-              {loading ? (
-                <View style={styles.loadingRow}>
-                  <ActivityIndicator color={colors.accent} />
-                  <Text style={styles.loadingText}>API’den alınıyor…</Text>
-                </View>
-              ) : null}
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-              {!loading && env ? (
-                <>
+              <AccordionSection
+                title="Canlı iklim"
+                subtitle={
+                  loading
+                    ? 'Yükleniyor…'
+                    : env
+                      ? `${fmt(env.climate.tempNowC, '°C')} · nem ${fmt(env.climate.humidityPct, '%', 0)}`
+                      : 'Open-Meteo'
+                }
+                defaultOpen
+              >
+                {loading ? (
+                  <View style={styles.loadingRow}>
+                    <ActivityIndicator color={colors.accent} />
+                    <Text style={styles.loadingText}>API’den alınıyor…</Text>
+                  </View>
+                ) : null}
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                {env ? (
                   <View style={styles.grid}>
-                    <Info
-                      label="Yükselti"
-                      value={fmt(env.elevationM, 'm', 0)}
-                    />
+                    <Info label="Yükselti" value={fmt(env.elevationM, 'm', 0)} />
                     <Info
                       label="Anlık sıcaklık"
                       value={fmt(env.climate.tempNowC, '°C')}
@@ -98,8 +119,18 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
                       value={fmt(env.climate.precipWeekMm, 'mm')}
                     />
                   </View>
+                ) : null}
+              </AccordionSection>
 
-                  <Text style={styles.sectionTitle}>Güneş</Text>
+              <AccordionSection
+                title="Güneş"
+                subtitle={
+                  env
+                    ? `${fmt(env.sun.radiationNowWm2, 'W/m²', 0)} · ${fmt(env.sun.sunshineWeekHours, 'saat')}`
+                    : undefined
+                }
+              >
+                {env ? (
                   <View style={styles.grid}>
                     <Info
                       label="Anlık kısa dalga ışınım"
@@ -110,8 +141,20 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
                       value={fmt(env.sun.sunshineWeekHours, 'saat')}
                     />
                   </View>
+                ) : (
+                  <Text style={styles.empty}>Veri bekleniyor…</Text>
+                )}
+              </AccordionSection>
 
-                  <Text style={styles.sectionTitle}>Rüzgar</Text>
+              <AccordionSection
+                title="Rüzgar"
+                subtitle={
+                  env?.wind.directionNowLabel
+                    ? `${env.wind.directionNowLabel} · ${fmt(env.wind.speedNowKmh, 'km/h')}`
+                    : undefined
+                }
+              >
+                {env ? (
                   <View style={styles.grid}>
                     <Info
                       label="Anlık hız / yön"
@@ -126,8 +169,16 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
                       value={fmt(env.wind.maxWeekKmh, 'km/h')}
                     />
                   </View>
+                ) : (
+                  <Text style={styles.empty}>Veri bekleniyor…</Text>
+                )}
+              </AccordionSection>
 
-                  <Text style={styles.sectionTitle}>Toprak (0–5 cm)</Text>
+              <AccordionSection
+                title="Toprak (canlı)"
+                subtitle={env ? `pH ${fmt(env.soil.ph)}` : 'SoilGrids'}
+              >
+                {env ? (
                   <View style={styles.grid}>
                     <Info label="pH" value={fmt(env.soil.ph)} />
                     <Info
@@ -136,55 +187,94 @@ export function ProvinceModal({ provinceId, onClose }: Props) {
                     />
                     <Info label="Kil" value={fmt(env.soil.clayPct, '%')} />
                     <Info label="Kum" value={fmt(env.soil.sandPct, '%')} />
+                    <Text style={styles.source}>
+                      {env.source.weather} · {env.source.soil}
+                    </Text>
                   </View>
+                ) : (
+                  <Text style={styles.empty}>Veri bekleniyor…</Text>
+                )}
+              </AccordionSection>
 
-                  <Text style={styles.source}>
-                    Kaynak: {env.source.weather} · {env.source.soil}
-                    {'\n'}
-                    İl merkezi noktası · güncellendi{' '}
-                    {new Date(env.fetchedAt).toLocaleString('tr-TR')}
-                  </Text>
+              {regionArchive ? (
+                <>
+                  <AccordionSection
+                    title="Bölge iklim notları"
+                    subtitle={regionArchive.climateData.general_character}
+                  >
+                    <Text style={styles.strategy}>
+                      {regionArchive.climateData.general_character}
+                    </Text>
+                    {regionArchive.climateData.features.map((f) => (
+                      <Text key={f} style={styles.bullet}>
+                        • {f}
+                      </Text>
+                    ))}
+                  </AccordionSection>
+
+                  <AccordionSection
+                    title="Bölge toprak notları"
+                    subtitle={regionArchive.soilStructure.general_character}
+                  >
+                    <Text style={styles.strategy}>
+                      {regionArchive.soilStructure.general_character}
+                    </Text>
+                    {regionArchive.soilStructure.features.map((f) => (
+                      <Text key={f} style={styles.bullet}>
+                        • {f}
+                      </Text>
+                    ))}
+                  </AccordionSection>
                 </>
-              ) : null}
-
-              <Text style={styles.sectionTitle}>Peyzaj özeti</Text>
-              <View style={styles.grid}>
-                <Info label="Köppen (referans)" value={province?.climate.koppen ?? ''} />
-                <Info
-                  label="Toprak / nem (referans)"
-                  value={province?.landscape.soilMoisture ?? ''}
-                />
-                <Info
-                  label="Sulama (referans)"
-                  value={province?.landscape.irrigation ?? ''}
-                />
-              </View>
-              <Text style={styles.strategy}>{province?.landscape.strategy}</Text>
-
-              <Text style={styles.sectionTitle}>
-                Bitki arşivi ({plants.length})
-              </Text>
-              {plants.length === 0 ? (
-                <Text style={styles.empty}>
-                  Bu il için test kaydı henüz eklenmedi.
-                </Text>
               ) : (
-                plants.map((plant) => <PlantCard key={plant.id} plant={plant} />)
+                <AccordionSection
+                  title="Peyzaj özeti"
+                  subtitle={province?.landscape.strategy}
+                >
+                  <Info
+                    label="Köppen"
+                    value={province?.climate.koppen ?? ''}
+                  />
+                  <Info
+                    label="Toprak / nem"
+                    value={province?.landscape.soilMoisture ?? ''}
+                  />
+                  <Info
+                    label="Sulama"
+                    value={province?.landscape.irrigation ?? ''}
+                  />
+                  <Text style={styles.strategy}>
+                    {province?.landscape.strategy}
+                  </Text>
+                </AccordionSection>
               )}
+
+              <AccordionSection
+                title={`Bitki arşivi (${plants.length})`}
+                subtitle={
+                  regionArchive
+                    ? `${regionArchive.city} / ${regionArchive.region}`
+                    : plants.length
+                      ? 'Bölgesel katalog'
+                      : 'Kayıt yok'
+                }
+                defaultOpen={plants.length > 0}
+              >
+                {plants.length === 0 ? (
+                  <Text style={styles.empty}>
+                    Bu il için arşiv kaydı henüz eklenmedi.
+                  </Text>
+                ) : (
+                  plants.map((plant) => (
+                    <PlantCard key={plant.id} plant={plant} />
+                  ))
+                )}
+              </AccordionSection>
             </ScrollView>
           </View>
         </View>
       </View>
     </Modal>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.info}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
   );
 }
 
@@ -243,21 +333,12 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   content: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 36,
   },
-  sectionTitle: {
-    fontFamily: fonts.bodySemi,
-    fontSize: 15,
-    color: colors.accent,
-    marginTop: 8,
-    marginBottom: 10,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-  },
   grid: {
-    gap: 8,
-    marginBottom: 8,
+    gap: 4,
+    paddingTop: 10,
   },
   info: {
     marginBottom: 8,
@@ -277,17 +358,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: colors.text,
-    marginBottom: 12,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  bullet: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    lineHeight: 20,
+    color: colors.text,
+    marginBottom: 4,
   },
   empty: {
     fontFamily: fonts.body,
     color: colors.textMuted,
+    paddingTop: 10,
   },
   loadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 12,
+    paddingTop: 10,
   },
   loadingText: {
     fontFamily: fonts.body,
@@ -298,13 +388,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 14,
     color: '#8B3A3A',
-    marginBottom: 12,
+    paddingTop: 10,
   },
   source: {
     fontFamily: fonts.body,
     fontSize: 11,
     lineHeight: 16,
     color: colors.textMuted,
-    marginBottom: 16,
+    marginTop: 4,
   },
 });
