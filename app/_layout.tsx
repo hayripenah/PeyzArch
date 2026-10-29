@@ -10,14 +10,20 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { colors } from '../src/theme/colors';
 
 export { ErrorBoundary } from 'expo-router';
 
-SplashScreen.preventAutoHideAsync();
+if (Platform.OS === 'web') {
+  // Metro web CSS — StyleSheet enjekte olmasa bile zemin/font tutar
+  require('../src/styles/global.css');
+}
+
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
+  const [loaded] = useFonts({
     Fraunces_400Regular,
     Fraunces_600SemiBold,
     SourceSans3_400Regular,
@@ -25,14 +31,8 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
+    if (loaded) SplashScreen.hideAsync().catch(() => undefined);
   }, [loaded]);
-
-  if (!loaded) return null;
 
   return (
     <Stack

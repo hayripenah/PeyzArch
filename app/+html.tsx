@@ -13,15 +13,20 @@ export default function Root({ children }: { children: ReactNode }) {
         />
         <title>PeyzArch</title>
         <ScrollViewStyleReset />
-        <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
+        <style dangerouslySetInnerHTML={{ __html: baseCss }} />
       </head>
       <body>{children}</body>
     </html>
   );
 }
 
-const responsiveBackground = `
-body {
+const baseCss = `
+html, body, #root {
+  height: 100%;
+  margin: 0;
   background-color: #F3F1EC;
+}
+body {
+  overflow: hidden;
 }
 `;

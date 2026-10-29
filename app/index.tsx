@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Hero } from '../src/components/Hero';
 import { NavBar } from '../src/components/NavBar';
@@ -15,12 +15,12 @@ export default function HomeScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
-    <View style={styles.root}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style="dark" />
       <NavBar />
       <ScrollView
         ref={scrollRef as never}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
         <Hero
@@ -42,13 +42,3 @@ export default function HomeScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  content: {
-    paddingBottom: 40,
-  },
-});

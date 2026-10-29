@@ -1,0 +1,14 @@
+/* PeyzArch web fallback — RN StyleSheet yanında görünür tasarım garantisi */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: #f3f1ec;
+  color: #2a2a28;
+  font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+}
+
+button {
+  font-family: inherit;
+}
